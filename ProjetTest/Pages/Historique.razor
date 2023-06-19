@@ -1,0 +1,168 @@
+﻿@page "/historique"
+@using ProjetTest.Data
+@inject TranslationsService TranslationsService
+
+<h1>Historique</h1>
+<p style="color:red">@Error</p>
+@if (translations == null)
+{
+    <!-- Show this if there is no data -->
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <!-- Show the table with old translations -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Langue d'origine</th>
+                <th>Texte d'origine</th>
+                <th>Texte traduit</th>
+                <th>Langue cible</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var translation in translations)
+            {
+                <tr>
+                    <td>@translation.OriginLanguage</td>
+                    <td>@translation.OriginText</td>
+                    <td>@translation.TargetText</td>
+                    <td>@translation.TargetLanguage</td>
+                    <td>
+                        <!-- Edit the current translation -->
+                        <button class="btn btn-primary"
+                        @onclick="(() => EditTranslation(translation))">
+                            Edit
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (ShowPopup)
+    {
+        <!-- This is the popup to create or edit a translation -->
+        <div class="modal" tabindex="-1" style="display:block" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Modifier la traduction</h3>
+                        <!-- Button to close the popup -->
+                        <button type="button" class="close"
+                        @onclick="ClosePopup">
+                            <span aria-hidden="true">X</span>
+                        </button>
+                    </div>
+                    <!-- Edit form for the current translation -->
+                    <div class="modal-body">
+                        <input class="form-control" type="text"
+                               placeholder="Origin Language"
+                       @bind="objTranslation.OriginLanguage" />
+                        <input class="form-control" type="text"
+                               placeholder="Origin Text"
+                       @bind="objTranslation.OriginText" />
+                        <input class="form-control" type="text"
+                               placeholder="Target Text"
+                       @bind="objTranslation.TargetText" />
+                        <input class="form-control" type="text"
+                               placeholder="Target Language"
+                        @bind="objTranslation.TargetLanguage" />
+                        <br />
+                        <!-- Button to save the translation -->
+                        <button class="btn btn-success"
+                        @onclick="SaveTranslation">
+                            Save
+                        </button>&nbsp;
+                        <!-- Only show delete button if not a new record -->
+                        @if (objTranslation.Id > 0)
+                        {
+                            <!-- Button to delete the translation -->
+                            <button class="btn btn-danger"
+                        @onclick="DeleteTranslation">
+                                Delete
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+@code
+{
+    string Error = "";
+    
+    List<Translation> translations = new List<Translation>();
+    Translation objTranslation = new Translation();
+    bool ShowPopup = false;
+    protected override async Task OnInitializedAsync()
+    {
+        // Get the translations
+        translations = await TranslationsService.GetTranslationsAsync();
+    }
+    void EditTranslation(Translation translation)
+    {
+        // Set the selected forecast 
+        // as the current forecast
+        objTranslation = translation;
+        // Open the Popup
+        ShowPopup = true;
+    }
+    void ClosePopup()
+    {
+        // Close the Popup
+        ShowPopup = false;
+    }
+    async Task SaveTranslation()
+    {
+        // Close the Popup
+        ShowPopup = false;
+        Error = "";
+        try
+        {
+            // A new forecast will have the Id set to 0
+            if (objTranslation.Id == 0)
+            {
+                // Create new forecast
+                Translation objNewTranslation = new Translation();
+                objNewTranslation.OriginLanguage = objTranslation.OriginLanguage;
+                objNewTranslation.OriginText = objTranslation.OriginText;
+                objNewTranslation.TargetText = objTranslation.TargetText;
+                objNewTranslation.TargetLanguage = objTranslation.TargetLanguage;
+                // Save the result
+                var NewTranslation =
+                await TranslationsService.CreateTranslationAsync(objNewTranslation);
+                // Add the Forcast
+                translations.Add(NewTranslation);
+            }
+            else
+            {
+                // This is an update
+                await TranslationsService.UpdateTranslationAsync(objTranslation);
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+    }
+    async Task DeleteTranslation()
+    {
+        // Close the Popup
+        ShowPopup = false;
+        try
+        {
+            Error = "";
+            // Delete the translation
+            await TranslationsService.DeleteTranslationAsync(objTranslation);
+            // Remove the translation
+            translations.Remove(objTranslation);
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+    }
+}
