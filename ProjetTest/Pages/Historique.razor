@@ -1,4 +1,4 @@
-﻿@page "/historique"
+@page "/historique"
 @using ProjetTest.Data
 @inject TranslationsService TranslationsService
 
@@ -104,8 +104,7 @@ else
     }
     void EditTranslation(Translation translation)
     {
-        // Set the selected forecast 
-        // as the current forecast
+        // Select the translation to edit
         objTranslation = translation;
         // Open the Popup
         ShowPopup = true;
@@ -122,10 +121,10 @@ else
         Error = "";
         try
         {
-            // A new forecast will have the Id set to 0
+            // A new translation will have the Id set to 0
             if (objTranslation.Id == 0)
             {
-                // Create new forecast
+                // Create new translation
                 Translation objNewTranslation = new Translation();
                 objNewTranslation.OriginLanguage = objTranslation.OriginLanguage;
                 objNewTranslation.OriginText = objTranslation.OriginText;
@@ -134,12 +133,12 @@ else
                 // Save the result
                 var NewTranslation =
                 await TranslationsService.CreateTranslationAsync(objNewTranslation);
-                // Add the Forcast
+                // Add the translation
                 translations.Add(NewTranslation);
             }
             else
             {
-                // This is an update
+                // Else it's an update
                 await TranslationsService.UpdateTranslationAsync(objTranslation);
             }
         }
